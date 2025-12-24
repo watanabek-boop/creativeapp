@@ -5,7 +5,9 @@ let state = {
   token: localStorage.getItem('token'),
   works: [],
   currentWork: null,
-  dashboard: []
+  dashboard: [],
+  selectedCheckin: null, // 選択されたチェックインタイプを保持
+  isSubmitting: false // 送信中フラグ
 }
 
 // API client
@@ -396,32 +398,62 @@ function WorkDetailPage() {
           ` : `
             <p class="text-gray-600 mb-4">今日の状況を選択してください:</p>
             <div class="grid grid-cols-1 gap-3">
-              <button onclick="handleCheckin('${work.id}', 'unknowns_decreased')" 
-                class="p-4 border-2 border-green-200 rounded-lg hover:bg-green-50 hover:border-green-400 transition text-left">
-                <div class="font-semibold text-green-700">✓ 未確定が減った</div>
+              <button onclick="selectCheckin('unknowns_decreased')" 
+                class="p-4 border-2 ${state.selectedCheckin === 'unknowns_decreased' ? 'border-green-500 bg-green-50' : 'border-green-200'} rounded-lg hover:bg-green-50 hover:border-green-400 transition text-left">
+                <div class="font-semibold text-green-700">
+                  ${state.selectedCheckin === 'unknowns_decreased' ? '<i class="fas fa-check-circle mr-2"></i>' : ''}
+                  ✓ 未確定が減った
+                </div>
                 <div class="text-sm text-gray-600">不明点や未解決事項が減少した</div>
               </button>
-              <button onclick="handleCheckin('${work.id}', 'decision_progressed')" 
-                class="p-4 border-2 border-blue-200 rounded-lg hover:bg-blue-50 hover:border-blue-400 transition text-left">
-                <div class="font-semibold text-blue-700">→ 判断が進んだ</div>
+              <button onclick="selectCheckin('decision_progressed')" 
+                class="p-4 border-2 ${state.selectedCheckin === 'decision_progressed' ? 'border-blue-500 bg-blue-50' : 'border-blue-200'} rounded-lg hover:bg-blue-50 hover:border-blue-400 transition text-left">
+                <div class="font-semibold text-blue-700">
+                  ${state.selectedCheckin === 'decision_progressed' ? '<i class="fas fa-check-circle mr-2"></i>' : ''}
+                  → 判断が進んだ
+                </div>
                 <div class="text-sm text-gray-600">意思決定やアクションが前進した</div>
               </button>
-              <button onclick="handleCheckin('${work.id}', 'no_change')" 
-                class="p-4 border-2 border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition text-left">
-                <div class="font-semibold text-gray-700">− 変化なし</div>
+              <button onclick="selectCheckin('no_change')" 
+                class="p-4 border-2 ${state.selectedCheckin === 'no_change' ? 'border-gray-500 bg-gray-50' : 'border-gray-200'} rounded-lg hover:bg-gray-50 hover:border-gray-400 transition text-left">
+                <div class="font-semibold text-gray-700">
+                  ${state.selectedCheckin === 'no_change' ? '<i class="fas fa-check-circle mr-2"></i>' : ''}
+                  − 変化なし
+                </div>
                 <div class="text-sm text-gray-600">特に進展も後退もない</div>
               </button>
-              <button onclick="handleCheckin('${work.id}', 'unknowns_increased')" 
-                class="p-4 border-2 border-yellow-200 rounded-lg hover:bg-yellow-50 hover:border-yellow-400 transition text-left">
-                <div class="font-semibold text-yellow-700">↑ 未確定が増えた</div>
+              <button onclick="selectCheckin('unknowns_increased')" 
+                class="p-4 border-2 ${state.selectedCheckin === 'unknowns_increased' ? 'border-yellow-500 bg-yellow-50' : 'border-yellow-200'} rounded-lg hover:bg-yellow-50 hover:border-yellow-400 transition text-left">
+                <div class="font-semibold text-yellow-700">
+                  ${state.selectedCheckin === 'unknowns_increased' ? '<i class="fas fa-check-circle mr-2"></i>' : ''}
+                  ↑ 未確定が増えた
+                </div>
                 <div class="text-sm text-gray-600">新たな不明点や課題が発生した</div>
               </button>
-              <button onclick="handleCheckin('${work.id}', 'decision_stalled')" 
-                class="p-4 border-2 border-red-200 rounded-lg hover:bg-red-50 hover:border-red-400 transition text-left">
-                <div class="font-semibold text-red-700">✗ 判断が止まった</div>
+              <button onclick="selectCheckin('decision_stalled')" 
+                class="p-4 border-2 ${state.selectedCheckin === 'decision_stalled' ? 'border-red-500 bg-red-50' : 'border-red-200'} rounded-lg hover:bg-red-50 hover:border-red-400 transition text-left">
+                <div class="font-semibold text-red-700">
+                  ${state.selectedCheckin === 'decision_stalled' ? '<i class="fas fa-check-circle mr-2"></i>' : ''}
+                  ✗ 判断が止まった
+                </div>
                 <div class="text-sm text-gray-600">意思決定やアクションが停滞している</div>
               </button>
             </div>
+            
+            ${state.selectedCheckin ? `
+              <div class="mt-6 flex gap-3">
+                <button onclick="handleCheckin('${work.id}', '${state.selectedCheckin}')" 
+                  class="flex-1 bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition font-semibold ${state.isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}"
+                  ${state.isSubmitting ? 'disabled' : ''}>
+                  ${state.isSubmitting ? '<i class="fas fa-spinner fa-spin mr-2"></i>保存中...' : '<i class="fas fa-save mr-2"></i>この内容でチェックインする'}
+                </button>
+                <button onclick="cancelCheckin()" 
+                  class="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-semibold"
+                  ${state.isSubmitting ? 'disabled' : ''}>
+                  キャンセル
+                </button>
+              </div>
+            ` : ''}
           `}
         </div>
 
@@ -648,10 +680,34 @@ function backToWorks() {
   render()
 }
 
+// チェックインタイプを選択
+function selectCheckin(checkType) {
+  state.selectedCheckin = checkType
+  render()
+}
+
+// チェックインをキャンセル
+function cancelCheckin() {
+  state.selectedCheckin = null
+  render()
+}
+
+// チェックインを確定して保存
 async function handleCheckin(workId, checkType) {
+  if (state.isSubmitting) return // 二重送信防止
+  
+  state.isSubmitting = true
+  render() // ボタンを無効化表示
+  
   const success = await createCheckin(workId, checkType)
+  
+  state.isSubmitting = false
+  state.selectedCheckin = null
+  
   if (success) {
     alert('チェックインを記録しました！')
+  } else {
+    render() // エラー時は再度選択可能に
   }
 }
 
