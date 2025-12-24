@@ -1014,10 +1014,6 @@ function ManagerDashboard() {
   `
 }
 
-// ============= Member Dashboard =============>
-  `
-}
-
 // ============= Event Handlers =============
 
 function showSignin() {
