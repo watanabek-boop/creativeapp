@@ -111,7 +111,7 @@ async function createWork(goalState, unknowns, waitingOn) {
 
 async function loadWorkDetail(workId) {
   try {
-    const { data } = await api.get(`/works/\${workId}`)
+    const { data } = await api.get(`/works/${workId}`)
     state.currentWork = data
     render()
   } catch (error) {
@@ -245,7 +245,7 @@ function MemberDashboard() {
           <div class="flex items-center gap-4">
             <span class="text-gray-600">
               <i class="fas fa-user mr-1"></i>
-              \${state.profile?.full_name || state.profile?.email}
+              ${state.profile?.full_name || state.profile?.email}
             </span>
             <button onclick="signout()" class="text-red-500 hover:text-red-700">
               <i class="fas fa-sign-out-alt mr-1"></i>
@@ -260,7 +260,7 @@ function MemberDashboard() {
           <div class="bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-6">
             <p class="text-yellow-700">
               <i class="fas fa-exclamation-triangle mr-2"></i>
-              今日まだチェックインしていないWorkが\${worksWithoutTodayCheckin.length}件あります
+              今日まだチェックインしていないWorkが${worksWithoutTodayCheckin.length}件あります
             </p>
           </div>
         ` : ''}
@@ -306,7 +306,7 @@ function MemberDashboard() {
         </div>
 
         <div class="grid gap-4">
-          \${state.works.length === 0 ? `
+          ${state.works.length === 0 ? `
             <div class="bg-white rounded-lg shadow p-8 text-center text-gray-500">
               <i class="fas fa-inbox text-4xl mb-4"></i>
               <p>まだWorkがありません。最初のWorkを作成しましょう。</p>
@@ -314,22 +314,22 @@ function MemberDashboard() {
           ` : state.works.map(work => {
             const needsCheckin = worksWithoutTodayCheckin.some(w => w.id === work.id)
             return `
-              <div class="bg-white rounded-lg shadow card p-6 \${needsCheckin ? 'border-l-4 border-yellow-400' : ''}">
+              <div class="bg-white rounded-lg shadow card p-6 ${needsCheckin ? 'border-l-4 border-yellow-400' : ''}">
                 <div class="flex justify-between items-start mb-3">
-                  <h3 class="text-lg font-semibold text-gray-800 flex-1">\${work.goal_state}</h3>
-                  \${needsCheckin ? '<span class="text-yellow-500 text-sm"><i class="fas fa-clock mr-1"></i>チェックイン待ち</span>' : ''}
+                  <h3 class="text-lg font-semibold text-gray-800 flex-1">${work.goal_state}</h3>
+                  ${needsCheckin ? '<span class="text-yellow-500 text-sm"><i class="fas fa-clock mr-1"></i>チェックイン待ち</span>' : ''}
                 </div>
                 <p class="text-sm text-gray-600 mb-2">
-                  <strong>未確定:</strong> \${work.unknowns}
+                  <strong>未確定:</strong> ${work.unknowns}
                 </p>
-                \${work.waiting_on ? `
+                ${work.waiting_on ? `
                   <p class="text-sm text-gray-600 mb-3">
-                    <strong>判断待ち:</strong> \${work.waiting_on}
+                    <strong>判断待ち:</strong> ${work.waiting_on}
                   </p>
                 ` : ''}
                 <div class="flex justify-between items-center text-sm text-gray-500">
-                  <span>作成: \${new Date(work.created_at).toLocaleDateString('ja-JP')}</span>
-                  <button onclick="viewWork('\${work.id}')" class="text-blue-500 hover:text-blue-700 font-medium">
+                  <span>作成: ${new Date(work.created_at).toLocaleDateString('ja-JP')}</span>
+                  <button onclick="viewWork('${work.id}')" class="text-blue-500 hover:text-blue-700 font-medium">
                     詳細・チェックイン <i class="fas fa-arrow-right ml-1"></i>
                   </button>
                 </div>
@@ -365,20 +365,20 @@ function WorkDetailPage() {
 
       <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div class="bg-white rounded-lg shadow p-6 mb-6">
-          <h2 class="text-2xl font-bold text-gray-800 mb-4">\${work.goal_state}</h2>
+          <h2 class="text-2xl font-bold text-gray-800 mb-4">${work.goal_state}</h2>
           <div class="space-y-3 text-gray-700">
             <div>
               <strong class="text-gray-800">未確定なこと:</strong>
-              <p class="mt-1 whitespace-pre-wrap">\${work.unknowns}</p>
+              <p class="mt-1 whitespace-pre-wrap">${work.unknowns}</p>
             </div>
-            \${work.waiting_on ? `
+            ${work.waiting_on ? `
               <div>
                 <strong class="text-gray-800">判断待ちの相手:</strong>
-                <p class="mt-1">\${work.waiting_on}</p>
+                <p class="mt-1">${work.waiting_on}</p>
               </div>
             ` : ''}
             <div class="text-sm text-gray-500">
-              作成日: \${new Date(work.created_at).toLocaleDateString('ja-JP')}
+              作成日: ${new Date(work.created_at).toLocaleDateString('ja-JP')}
             </div>
           </div>
         </div>
@@ -386,37 +386,37 @@ function WorkDetailPage() {
         <div class="bg-white rounded-lg shadow p-6 mb-6">
           <h3 class="text-xl font-semibold mb-4">
             今日のチェックイン
-            \${hasCheckedInToday ? '<span class="text-green-500 text-sm ml-2"><i class="fas fa-check-circle"></i> 完了</span>' : ''}
+            ${hasCheckedInToday ? '<span class="text-green-500 text-sm ml-2"><i class="fas fa-check-circle"></i> 完了</span>' : ''}
           </h3>
           
-          \${hasCheckedInToday ? `
+          ${hasCheckedInToday ? `
             <div class="bg-green-50 border border-green-200 rounded-lg p-4 text-green-800">
               <p><i class="fas fa-check-circle mr-2"></i>今日のチェックインは完了しています</p>
             </div>
           ` : `
             <p class="text-gray-600 mb-4">今日の状況を選択してください:</p>
             <div class="grid grid-cols-1 gap-3">
-              <button onclick="handleCheckin('\${work.id}', 'unknowns_decreased')" 
+              <button onclick="handleCheckin('${work.id}', 'unknowns_decreased')" 
                 class="p-4 border-2 border-green-200 rounded-lg hover:bg-green-50 hover:border-green-400 transition text-left">
                 <div class="font-semibold text-green-700">✓ 未確定が減った</div>
                 <div class="text-sm text-gray-600">不明点や未解決事項が減少した</div>
               </button>
-              <button onclick="handleCheckin('\${work.id}', 'decision_progressed')" 
+              <button onclick="handleCheckin('${work.id}', 'decision_progressed')" 
                 class="p-4 border-2 border-blue-200 rounded-lg hover:bg-blue-50 hover:border-blue-400 transition text-left">
                 <div class="font-semibold text-blue-700">→ 判断が進んだ</div>
                 <div class="text-sm text-gray-600">意思決定やアクションが前進した</div>
               </button>
-              <button onclick="handleCheckin('\${work.id}', 'no_change')" 
+              <button onclick="handleCheckin('${work.id}', 'no_change')" 
                 class="p-4 border-2 border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition text-left">
                 <div class="font-semibold text-gray-700">− 変化なし</div>
                 <div class="text-sm text-gray-600">特に進展も後退もない</div>
               </button>
-              <button onclick="handleCheckin('\${work.id}', 'unknowns_increased')" 
+              <button onclick="handleCheckin('${work.id}', 'unknowns_increased')" 
                 class="p-4 border-2 border-yellow-200 rounded-lg hover:bg-yellow-50 hover:border-yellow-400 transition text-left">
                 <div class="font-semibold text-yellow-700">↑ 未確定が増えた</div>
                 <div class="text-sm text-gray-600">新たな不明点や課題が発生した</div>
               </button>
-              <button onclick="handleCheckin('\${work.id}', 'decision_stalled')" 
+              <button onclick="handleCheckin('${work.id}', 'decision_stalled')" 
                 class="p-4 border-2 border-red-200 rounded-lg hover:bg-red-50 hover:border-red-400 transition text-left">
                 <div class="font-semibold text-red-700">✗ 判断が止まった</div>
                 <div class="text-sm text-gray-600">意思決定やアクションが停滞している</div>
@@ -427,11 +427,11 @@ function WorkDetailPage() {
 
         <div class="bg-white rounded-lg shadow p-6">
           <h3 class="text-xl font-semibold mb-4">チェックイン履歴</h3>
-          \${checkins.length === 0 ? `
+          ${checkins.length === 0 ? `
             <p class="text-gray-500 text-center py-4">まだチェックインがありません</p>
           ` : `
             <div class="space-y-3">
-              \${checkins.map(c => {
+              ${checkins.map(c => {
                 let status = ''
                 let color = ''
                 if (c.unknowns_decreased) { status = '✓ 未確定が減った'; color = 'text-green-600' }
@@ -441,9 +441,9 @@ function WorkDetailPage() {
                 else if (c.decision_stalled) { status = '✗ 判断が止まった'; color = 'text-red-600' }
                 
                 return `
-                  <div class="flex justify-between items-center border-l-4 \${color.replace('text-', 'border-')} pl-4 py-2">
-                    <span class="font-medium \${color}">\${status}</span>
-                    <span class="text-sm text-gray-500">\${new Date(c.created_at).toLocaleString('ja-JP')}</span>
+                  <div class="flex justify-between items-center border-l-4 ${color.replace('text-', 'border-')} pl-4 py-2">
+                    <span class="font-medium ${color}">${status}</span>
+                    <span class="text-sm text-gray-500">${new Date(c.created_at).toLocaleString('ja-JP')}</span>
                   </div>
                 `
               }).join('')}
@@ -475,7 +475,7 @@ function ExecutiveDashboard() {
             </button>
             <span class="text-gray-600">
               <i class="fas fa-user-tie mr-1"></i>
-              \${state.profile?.full_name || state.profile?.email}
+              ${state.profile?.full_name || state.profile?.email}
             </span>
             <button onclick="signout()" class="text-red-500 hover:text-red-700">
               <i class="fas fa-sign-out-alt mr-1"></i>
@@ -488,15 +488,15 @@ function ExecutiveDashboard() {
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div class="grid grid-cols-3 gap-4 mb-8">
           <div class="bg-white rounded-lg shadow p-6 text-center">
-            <div class="text-4xl font-bold text-red-500">\${redWorks.length}</div>
+            <div class="text-4xl font-bold text-red-500">${redWorks.length}</div>
             <div class="text-gray-600 mt-2">🔴 今すぐ介入</div>
           </div>
           <div class="bg-white rounded-lg shadow p-6 text-center">
-            <div class="text-4xl font-bold text-yellow-500">\${yellowWorks.length}</div>
+            <div class="text-4xl font-bold text-yellow-500">${yellowWorks.length}</div>
             <div class="text-gray-600 mt-2">🟡 そろそろ確認</div>
           </div>
           <div class="bg-white rounded-lg shadow p-6 text-center">
-            <div class="text-4xl font-bold text-green-500">\${greenWorks.length}</div>
+            <div class="text-4xl font-bold text-green-500">${greenWorks.length}</div>
             <div class="text-gray-600 mt-2">🟢 放置OK</div>
           </div>
         </div>
@@ -508,7 +508,7 @@ function ExecutiveDashboard() {
           </div>
         ` : `
           <div class="space-y-4">
-            \${state.dashboard.map(item => {
+            ${state.dashboard.map(item => {
               const levelColors = {
                 red: { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-700', icon: '🔴' },
                 yellow: { bg: 'bg-yellow-50', border: 'border-yellow-200', text: 'text-yellow-700', icon: '🟡' },
@@ -517,17 +517,17 @@ function ExecutiveDashboard() {
               const colors = levelColors[item.intervention.level]
 
               return `
-                <div class="bg-white rounded-lg shadow card level-\${item.intervention.level}">
+                <div class="bg-white rounded-lg shadow card level-${item.intervention.level}">
                   <div class="p-6">
                     <div class="flex justify-between items-start mb-4">
                       <div class="flex-1">
                         <div class="flex items-center gap-2 mb-2">
-                          <span class="text-2xl">\${colors.icon}</span>
-                          <h3 class="text-lg font-semibold text-gray-800">\${item.goal_state}</h3>
+                          <span class="text-2xl">${colors.icon}</span>
+                          <h3 class="text-lg font-semibold text-gray-800">${item.goal_state}</h3>
                         </div>
                         <div class="text-sm text-gray-600">
-                          <span><i class="fas fa-user mr-1"></i>\${item.profiles.full_name}</span>
-                          <span class="ml-4"><i class="fas fa-clock mr-1"></i>最終チェックイン: \${
+                          <span><i class="fas fa-user mr-1"></i>${item.profiles.full_name}</span>
+                          <span class="ml-4"><i class="fas fa-clock mr-1"></i>最終チェックイン: ${
                             item.intervention.lastCheckin 
                               ? new Date(item.intervention.lastCheckin).toLocaleDateString('ja-JP') + ' (' + item.intervention.daysSinceLastCheckin + '日前)'
                               : 'なし'
@@ -536,10 +536,10 @@ function ExecutiveDashboard() {
                       </div>
                     </div>
 
-                    <div class="\${colors.bg} border \${colors.border} rounded-lg p-4 mb-3">
-                      <div class="font-semibold \${colors.text} mb-2">判定理由:</div>
-                      <ul class="list-disc list-inside space-y-1 text-sm \${colors.text}">
-                        \${item.intervention.reasons.map(r => `<li>\${r}</li>`).join('')}
+                    <div class="${colors.bg} border ${colors.border} rounded-lg p-4 mb-3">
+                      <div class="font-semibold ${colors.text} mb-2">判定理由:</div>
+                      <ul class="list-disc list-inside space-y-1 text-sm ${colors.text}">
+                        ${item.intervention.reasons.map(r => `<li>${r}</li>`).join('')}
                       </ul>
                     </div>
 
@@ -549,7 +549,7 @@ function ExecutiveDashboard() {
                         推奨アクション:
                       </div>
                       <ul class="list-disc list-inside space-y-1 text-sm text-blue-700">
-                        \${item.intervention.actions.map(a => `<li>\${a}</li>`).join('')}
+                        ${item.intervention.actions.map(a => `<li>${a}</li>`).join('')}
                       </ul>
                     </div>
 
@@ -559,11 +559,11 @@ function ExecutiveDashboard() {
                         <div class="mt-3 space-y-2">
                           <div>
                             <strong>未確定事項:</strong>
-                            <p class="whitespace-pre-wrap text-gray-700 mt-1">\${item.unknowns}</p>
+                            <p class="whitespace-pre-wrap text-gray-700 mt-1">${item.unknowns}</p>
                           </div>
-                          \${item.waiting_on ? `
+                          ${item.waiting_on ? `
                             <div>
-                              <strong>判断待ち:</strong> \${item.waiting_on}
+                              <strong>判断待ち:</strong> ${item.waiting_on}
                             </div>
                           ` : ''}
                         </div>
