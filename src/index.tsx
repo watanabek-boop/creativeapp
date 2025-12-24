@@ -127,7 +127,11 @@ app.get('/api/works', authMiddleware, async (c) => {
 
   let query = supabase
     .from('works')
-    .select('*, profiles(email, full_name, role)')
+    .select(`
+      *, 
+      profiles(email, full_name, role),
+      checkins(id, created_at, unknowns_decreased, unknowns_increased, decision_progressed, decision_stalled, no_change)
+    `)
     .eq('status', 'open')
     .order('created_at', { ascending: false })
 
@@ -142,7 +146,15 @@ app.get('/api/works', authMiddleware, async (c) => {
     return c.json({ error: error.message }, 400)
   }
 
-  return c.json({ works })
+  // Sort checkins by created_at descending for each work
+  const worksWithSortedCheckins = works?.map(work => ({
+    ...work,
+    checkins: work.checkins?.sort((a: any, b: any) => 
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    ) || []
+  }))
+
+  return c.json({ works: worksWithSortedCheckins })
 })
 
 app.post('/api/works', authMiddleware, async (c) => {
