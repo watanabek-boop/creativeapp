@@ -112,6 +112,96 @@ app.get('/api/auth/me', authMiddleware, async (c) => {
   return c.json({ user, profile })
 })
 
+// ============= Offices APIs =============
+
+app.get('/api/offices', authMiddleware, async (c) => {
+  const supabase = c.get('supabase')
+
+  const { data: offices, error } = await supabase
+    .from('offices')
+    .select('*')
+    .order('region', { ascending: true })
+    .order('name', { ascending: true })
+
+  if (error) {
+    return c.json({ error: error.message }, 400)
+  }
+
+  return c.json({ offices })
+})
+
+// ============= Users APIs =============
+
+app.get('/api/users', authMiddleware, async (c) => {
+  const user = c.get('user')
+  const supabase = c.get('supabase')
+
+  // Get user profile to check role
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role, office_id')
+    .eq('id', user.id)
+    .single()
+
+  let query = supabase
+    .from('profiles')
+    .select('id, email, full_name, role, office_id, offices(id, name, region)')
+    .order('full_name', { ascending: true })
+
+  // If manager, only show users from same office
+  if (profile?.role === 'manager') {
+    query = query.eq('office_id', profile.office_id)
+  }
+
+  const { data: users, error } = await query
+
+  if (error) {
+    return c.json({ error: error.message }, 400)
+  }
+
+  return c.json({ users })
+})
+
+// ============= Profiles APIs =============
+
+app.put('/api/profiles/:id', authMiddleware, async (c) => {
+  const user = c.get('user')
+  const supabase = c.get('supabase')
+  const profileId = c.req.param('id')
+  const { full_name, office_id, manager_id, role } = await c.req.json()
+
+  // Get user profile to check role
+  const { data: currentProfile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  // Check if user has permission to update this profile
+  if (user.id !== profileId && currentProfile?.role !== 'executive' && currentProfile?.role !== 'manager') {
+    return c.json({ error: 'Unauthorized' }, 403)
+  }
+
+  // Only executive can change role
+  const updateData: any = { full_name, office_id, manager_id }
+  if (currentProfile?.role === 'executive' && role) {
+    updateData.role = role
+  }
+
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .update(updateData)
+    .eq('id', profileId)
+    .select('*, offices(id, name, region)')
+    .single()
+
+  if (error) {
+    return c.json({ error: error.message }, 400)
+  }
+
+  return c.json({ profile })
+})
+
 // ============= Works APIs =============
 
 app.get('/api/works', authMiddleware, async (c) => {
@@ -160,12 +250,31 @@ app.get('/api/works', authMiddleware, async (c) => {
 app.post('/api/works', authMiddleware, async (c) => {
   const user = c.get('user')
   const supabase = c.get('supabase')
-  const { goal_state, unknowns, waiting_on } = await c.req.json()
+  const { goal_state, unknowns, waiting_on, user_id, office_id } = await c.req.json()
+
+  // Get user profile to check role
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role, office_id')
+    .eq('id', user.id)
+    .single()
+
+  // Determine the actual user_id for the work
+  // If executive/manager assigns to someone, use provided user_id
+  // Otherwise, use current user's id
+  const actualUserId = (profile?.role === 'executive' || profile?.role === 'manager') && user_id 
+    ? user_id 
+    : user.id
+
+  // Determine office_id
+  const actualOfficeId = office_id || profile?.office_id
 
   const { data: work, error } = await supabase
     .from('works')
     .insert({
-      user_id: user.id,
+      user_id: actualUserId,
+      assigned_by: actualUserId !== user.id ? user.id : null,
+      office_id: actualOfficeId,
       goal_state,
       unknowns,
       waiting_on
