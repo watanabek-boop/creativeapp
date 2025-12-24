@@ -365,71 +365,77 @@ function ProfileEditPage() {
 
 function AuthPage() {
   return `
-    <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600">
-      <div class="bg-white p-8 rounded-lg shadow-2xl w-full max-w-md">
-        <h1 class="text-3xl font-bold text-center mb-8 text-gray-800">
-          <i class="fas fa-rocket mr-2"></i>
-          Creative App
-        </h1>
+    <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--primary-purple), var(--primary-purple-light));">
+      <div style="background: white; padding: 48px; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); width: 100%; max-width: 440px;">
+        <div style="text-align: center; margin-bottom: 32px;">
+          <div style="width: 80px; height: 80px; background: linear-gradient(135deg, var(--primary-purple), var(--primary-purple-light)); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; color: white; font-size: 36px;">
+            <i class="fas fa-chart-line"></i>
+          </div>
+          <h1 style="font-size: 28px; font-weight: 700; color: var(--gray-900); margin: 0;">WorkFlow</h1>
+          <p style="font-size: 14px; color: var(--gray-600); margin-top: 8px;">介入判断ダッシュボード</p>
+        </div>
         
-        <div class="mb-6">
-          <button onclick="showSignin()" id="signinTab" class="w-1/2 py-2 border-b-2 border-blue-500 font-semibold text-blue-500">
+        <div style="display: flex; margin-bottom: 24px; border-bottom: 2px solid var(--gray-200);">
+          <button onclick="showSignin()" id="signinTab" style="flex: 1; padding: 12px 0; border: none; background: none; border-bottom: 3px solid var(--primary-purple); color: var(--primary-purple); font-weight: 600; cursor: pointer; margin-bottom: -2px;">
             ログイン
           </button>
-          <button onclick="showSignup()" id="signupTab" class="w-1/2 py-2 border-b-2 border-gray-200 text-gray-500">
+          <button onclick="showSignup()" id="signupTab" style="flex: 1; padding: 12px 0; border: none; background: none; border-bottom: 3px solid transparent; color: var(--gray-500); font-weight: 600; cursor: pointer; margin-bottom: -2px;">
             サインアップ
           </button>
         </div>
 
         <div id="signinForm">
-          <form onsubmit="handleSignin(event)" class="space-y-4">
+          <form onsubmit="handleSignin(event)" style="display: flex; flex-direction: column; gap: 16px;">
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">メールアドレス</label>
+              <label style="display: block; font-size: 14px; font-weight: 600; color: var(--gray-700); margin-bottom: 8px;">メールアドレス</label>
               <input type="email" name="email" required 
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                style="width: 100%; padding: 12px 16px; border: 2px solid var(--gray-300); border-radius: 8px; font-size: 14px;"
                 placeholder="you@example.com">
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">パスワード</label>
+              <label style="display: block; font-size: 14px; font-weight: 600; color: var(--gray-700); margin-bottom: 8px;">パスワード</label>
               <input type="password" name="password" required 
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                style="width: 100%; padding: 12px 16px; border: 2px solid var(--gray-300); border-radius: 8px; font-size: 14px;"
                 placeholder="••••••••">
             </div>
-            <button type="submit" class="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition">
+            <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; margin-top: 8px;">
+              <i class="fas fa-sign-in-alt"></i>
               ログイン
             </button>
           </form>
         </div>
 
-        <div id="signupForm" class="hidden">
-          <form onsubmit="handleSignup(event)" class="space-y-4">
+        <div id="signupForm" style="display: none;">
+          <form onsubmit="handleSignup(event)" style="display: flex; flex-direction: column; gap: 16px;">
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">メールアドレス</label>
+              <label style="display: block; font-size: 14px; font-weight: 600; color: var(--gray-700); margin-bottom: 8px;">メールアドレス</label>
               <input type="email" name="email" required 
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                style="width: 100%; padding: 12px 16px; border: 2px solid var(--gray-300); border-radius: 8px; font-size: 14px;"
                 placeholder="you@example.com">
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">氏名</label>
+              <label style="display: block; font-size: 14px; font-weight: 600; color: var(--gray-700); margin-bottom: 8px;">氏名</label>
               <input type="text" name="fullName" required 
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                style="width: 100%; padding: 12px 16px; border: 2px solid var(--gray-300); border-radius: 8px; font-size: 14px;"
                 placeholder="山田太郎">
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">パスワード</label>
+              <label style="display: block; font-size: 14px; font-weight: 600; color: var(--gray-700); margin-bottom: 8px;">パスワード</label>
               <input type="password" name="password" required minlength="6"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                style="width: 100%; padding: 12px 16px; border: 2px solid var(--gray-300); border-radius: 8px; font-size: 14px;"
                 placeholder="••••••••">
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">役割</label>
+              <label style="display: block; font-size: 14px; font-weight: 600; color: var(--gray-700); margin-bottom: 8px;">役割</label>
               <select name="role" 
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                style="width: 100%; padding: 12px 16px; border: 2px solid var(--gray-300); border-radius: 8px; font-size: 14px;">
                 <option value="member">Member (社員)</option>
-                <option value="executive">Executive (経営者)</option>
+                <option value="regional_manager">Regional Manager (地域責任者)</option>
+                <option value="base_manager">Base Manager (拠点責任者)</option>
               </select>
             </div>
-            <button type="submit" class="w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition">
+            <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; margin-top: 8px; background: var(--green-500);">
+              <i class="fas fa-user-plus"></i>
               サインアップ
             </button>
           </form>
@@ -1017,21 +1023,21 @@ function ManagerDashboard() {
 // ============= Event Handlers =============
 
 function showSignin() {
-  document.getElementById('signinForm').classList.remove('hidden')
-  document.getElementById('signupForm').classList.add('hidden')
-  document.getElementById('signinTab').classList.add('border-blue-500', 'text-blue-500', 'font-semibold')
-  document.getElementById('signinTab').classList.remove('border-gray-200', 'text-gray-500')
-  document.getElementById('signupTab').classList.remove('border-blue-500', 'text-blue-500', 'font-semibold')
-  document.getElementById('signupTab').classList.add('border-gray-200', 'text-gray-500')
+  document.getElementById('signinForm').style.display = 'block'
+  document.getElementById('signupForm').style.display = 'none'
+  document.getElementById('signinTab').style.borderBottomColor = 'var(--primary-purple)'
+  document.getElementById('signinTab').style.color = 'var(--primary-purple)'
+  document.getElementById('signupTab').style.borderBottomColor = 'transparent'
+  document.getElementById('signupTab').style.color = 'var(--gray-500)'
 }
 
 function showSignup() {
-  document.getElementById('signupForm').classList.remove('hidden')
-  document.getElementById('signinForm').classList.add('hidden')
-  document.getElementById('signupTab').classList.add('border-blue-500', 'text-blue-500', 'font-semibold')
-  document.getElementById('signupTab').classList.remove('border-gray-200', 'text-gray-500')
-  document.getElementById('signinTab').classList.remove('border-blue-500', 'text-blue-500', 'font-semibold')
-  document.getElementById('signinTab').classList.add('border-gray-200', 'text-gray-500')
+  document.getElementById('signupForm').style.display = 'block'
+  document.getElementById('signinForm').style.display = 'none'
+  document.getElementById('signupTab').style.borderBottomColor = 'var(--primary-purple)'
+  document.getElementById('signupTab').style.color = 'var(--primary-purple)'
+  document.getElementById('signinTab').style.borderBottomColor = 'transparent'
+  document.getElementById('signinTab').style.color = 'var(--gray-500)'
 }
 
 async function handleSignin(e) {
@@ -1179,7 +1185,7 @@ function render() {
   }
 
   if (!state.profile) {
-    app.innerHTML = '<div class="flex items-center justify-center min-h-screen"><div class="text-xl">Loading...</div></div>'
+    app.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; background: var(--gray-50);"><div style="text-align: center;"><i class="fas fa-spinner fa-spin" style="font-size: 48px; color: var(--primary-purple); margin-bottom: 16px;"></i><div style="font-size: 18px; color: var(--gray-700);">Loading...</div></div></div>'
     return
   }
 
