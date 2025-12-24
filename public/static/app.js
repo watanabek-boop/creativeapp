@@ -111,7 +111,7 @@ async function createWork(goalState, unknowns, waitingOn) {
 
 async function loadWorkDetail(workId) {
   try {
-    const { data } = await api.get(\`/works/\${workId}\`)
+    const { data } = await api.get(`/works/\${workId}`)
     state.currentWork = data
     render()
   } catch (error) {
@@ -151,7 +151,7 @@ async function loadDashboard() {
 // ============= UI Components =============
 
 function AuthPage() {
-  return \`
+  return `
     <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600">
       <div class="bg-white p-8 rounded-lg shadow-2xl w-full max-w-md">
         <h1 class="text-3xl font-bold text-center mb-8 text-gray-800">
@@ -223,7 +223,7 @@ function AuthPage() {
         </div>
       </div>
     </div>
-  \`
+  `
 }
 
 function MemberDashboard() {
@@ -234,7 +234,7 @@ function MemberDashboard() {
     return lastCheckin.toDateString() !== today.toDateString()
   })
 
-  return \`
+  return `
     <div class="min-h-screen bg-gray-50">
       <nav class="bg-white shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
@@ -256,14 +256,14 @@ function MemberDashboard() {
       </nav>
 
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        ${worksWithoutTodayCheckin.length > 0 ? \`
+        ${worksWithoutTodayCheckin.length > 0 ? `
           <div class="bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-6">
             <p class="text-yellow-700">
               <i class="fas fa-exclamation-triangle mr-2"></i>
               今日まだチェックインしていないWorkが\${worksWithoutTodayCheckin.length}件あります
             </p>
           </div>
-        \` : ''}
+        ` : ''}
 
         <div class="mb-6 flex justify-between items-center">
           <h2 class="text-xl font-semibold text-gray-800">Work一覧</h2>
@@ -306,14 +306,14 @@ function MemberDashboard() {
         </div>
 
         <div class="grid gap-4">
-          \${state.works.length === 0 ? \`
+          \${state.works.length === 0 ? `
             <div class="bg-white rounded-lg shadow p-8 text-center text-gray-500">
               <i class="fas fa-inbox text-4xl mb-4"></i>
               <p>まだWorkがありません。最初のWorkを作成しましょう。</p>
             </div>
-          \` : state.works.map(work => {
+          ` : state.works.map(work => {
             const needsCheckin = worksWithoutTodayCheckin.some(w => w.id === work.id)
-            return \`
+            return `
               <div class="bg-white rounded-lg shadow card p-6 \${needsCheckin ? 'border-l-4 border-yellow-400' : ''}">
                 <div class="flex justify-between items-start mb-3">
                   <h3 class="text-lg font-semibold text-gray-800 flex-1">\${work.goal_state}</h3>
@@ -322,11 +322,11 @@ function MemberDashboard() {
                 <p class="text-sm text-gray-600 mb-2">
                   <strong>未確定:</strong> \${work.unknowns}
                 </p>
-                \${work.waiting_on ? \`
+                \${work.waiting_on ? `
                   <p class="text-sm text-gray-600 mb-3">
                     <strong>判断待ち:</strong> \${work.waiting_on}
                   </p>
-                \` : ''}
+                ` : ''}
                 <div class="flex justify-between items-center text-sm text-gray-500">
                   <span>作成: \${new Date(work.created_at).toLocaleDateString('ja-JP')}</span>
                   <button onclick="viewWork('\${work.id}')" class="text-blue-500 hover:text-blue-700 font-medium">
@@ -334,12 +334,12 @@ function MemberDashboard() {
                   </button>
                 </div>
               </div>
-            \`
+            `
           }).join('')}
         </div>
       </div>
     </div>
-  \`
+  `
 }
 
 function WorkDetailPage() {
@@ -352,7 +352,7 @@ function WorkDetailPage() {
   const lastCheckin = checkins[0]
   const hasCheckedInToday = lastCheckin && new Date(lastCheckin.created_at).toDateString() === today
 
-  return \`
+  return `
     <div class="min-h-screen bg-gray-50">
       <nav class="bg-white shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -371,12 +371,12 @@ function WorkDetailPage() {
               <strong class="text-gray-800">未確定なこと:</strong>
               <p class="mt-1 whitespace-pre-wrap">\${work.unknowns}</p>
             </div>
-            \${work.waiting_on ? \`
+            \${work.waiting_on ? `
               <div>
                 <strong class="text-gray-800">判断待ちの相手:</strong>
                 <p class="mt-1">\${work.waiting_on}</p>
               </div>
-            \` : ''}
+            ` : ''}
             <div class="text-sm text-gray-500">
               作成日: \${new Date(work.created_at).toLocaleDateString('ja-JP')}
             </div>
@@ -389,11 +389,11 @@ function WorkDetailPage() {
             \${hasCheckedInToday ? '<span class="text-green-500 text-sm ml-2"><i class="fas fa-check-circle"></i> 完了</span>' : ''}
           </h3>
           
-          \${hasCheckedInToday ? \`
+          \${hasCheckedInToday ? `
             <div class="bg-green-50 border border-green-200 rounded-lg p-4 text-green-800">
               <p><i class="fas fa-check-circle mr-2"></i>今日のチェックインは完了しています</p>
             </div>
-          \` : \`
+          ` : `
             <p class="text-gray-600 mb-4">今日の状況を選択してください:</p>
             <div class="grid grid-cols-1 gap-3">
               <button onclick="handleCheckin('\${work.id}', 'unknowns_decreased')" 
@@ -422,14 +422,14 @@ function WorkDetailPage() {
                 <div class="text-sm text-gray-600">意思決定やアクションが停滞している</div>
               </button>
             </div>
-          \`}
+          `}
         </div>
 
         <div class="bg-white rounded-lg shadow p-6">
           <h3 class="text-xl font-semibold mb-4">チェックイン履歴</h3>
-          \${checkins.length === 0 ? \`
+          \${checkins.length === 0 ? `
             <p class="text-gray-500 text-center py-4">まだチェックインがありません</p>
-          \` : \`
+          ` : `
             <div class="space-y-3">
               \${checkins.map(c => {
                 let status = ''
@@ -440,19 +440,19 @@ function WorkDetailPage() {
                 else if (c.unknowns_increased) { status = '↑ 未確定が増えた'; color = 'text-yellow-600' }
                 else if (c.decision_stalled) { status = '✗ 判断が止まった'; color = 'text-red-600' }
                 
-                return \`
+                return `
                   <div class="flex justify-between items-center border-l-4 \${color.replace('text-', 'border-')} pl-4 py-2">
                     <span class="font-medium \${color}">\${status}</span>
                     <span class="text-sm text-gray-500">\${new Date(c.created_at).toLocaleString('ja-JP')}</span>
                   </div>
-                \`
+                `
               }).join('')}
             </div>
-          \`}
+          `}
         </div>
       </div>
     </div>
-  \`
+  `
 }
 
 function ExecutiveDashboard() {
@@ -460,7 +460,7 @@ function ExecutiveDashboard() {
   const yellowWorks = state.dashboard.filter(w => w.intervention.level === 'yellow')
   const greenWorks = state.dashboard.filter(w => w.intervention.level === 'green')
 
-  return \`
+  return `
     <div class="min-h-screen bg-gray-50">
       <nav class="bg-white shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
@@ -501,12 +501,12 @@ function ExecutiveDashboard() {
           </div>
         </div>
 
-        ${state.dashboard.length === 0 ? \`
+        ${state.dashboard.length === 0 ? `
           <div class="bg-white rounded-lg shadow p-8 text-center text-gray-500">
             <i class="fas fa-inbox text-4xl mb-4"></i>
             <p>現在進行中のWorkはありません</p>
           </div>
-        \` : \`
+        ` : `
           <div class="space-y-4">
             \${state.dashboard.map(item => {
               const levelColors = {
@@ -516,7 +516,7 @@ function ExecutiveDashboard() {
               }
               const colors = levelColors[item.intervention.level]
 
-              return \`
+              return `
                 <div class="bg-white rounded-lg shadow card level-\${item.intervention.level}">
                   <div class="p-6">
                     <div class="flex justify-between items-start mb-4">
@@ -539,7 +539,7 @@ function ExecutiveDashboard() {
                     <div class="\${colors.bg} border \${colors.border} rounded-lg p-4 mb-3">
                       <div class="font-semibold \${colors.text} mb-2">判定理由:</div>
                       <ul class="list-disc list-inside space-y-1 text-sm \${colors.text}">
-                        \${item.intervention.reasons.map(r => \`<li>\${r}</li>\`).join('')}
+                        \${item.intervention.reasons.map(r => `<li>\${r}</li>`).join('')}
                       </ul>
                     </div>
 
@@ -549,7 +549,7 @@ function ExecutiveDashboard() {
                         推奨アクション:
                       </div>
                       <ul class="list-disc list-inside space-y-1 text-sm text-blue-700">
-                        \${item.intervention.actions.map(a => \`<li>\${a}</li>\`).join('')}
+                        \${item.intervention.actions.map(a => `<li>\${a}</li>`).join('')}
                       </ul>
                     </div>
 
@@ -561,23 +561,23 @@ function ExecutiveDashboard() {
                             <strong>未確定事項:</strong>
                             <p class="whitespace-pre-wrap text-gray-700 mt-1">\${item.unknowns}</p>
                           </div>
-                          \${item.waiting_on ? \`
+                          \${item.waiting_on ? `
                             <div>
                               <strong>判断待ち:</strong> \${item.waiting_on}
                             </div>
-                          \` : ''}
+                          ` : ''}
                         </div>
                       </details>
                     </div>
                   </div>
                 </div>
-              \`
+              `
             }).join('')}
           </div>
-        \`}
+        `}
       </div>
     </div>
-  \`
+  `
 }
 
 // ============= Event Handlers =============
