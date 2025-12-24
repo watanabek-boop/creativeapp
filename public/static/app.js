@@ -6,6 +6,9 @@ let state = {
   works: [],
   currentWork: null,
   dashboard: [],
+  offices: [],
+  users: [],
+  currentView: 'main', // 'main', 'profile-edit'
   selectedCheckin: null, // 選択されたチェックインタイプを保持
   isSubmitting: false // 送信中フラグ
 }
@@ -69,6 +72,47 @@ async function signout() {
     render()
   } catch (error) {
     console.error('サインアウトエラー:', error)
+  }
+}
+
+// Profile edit functions
+async function openProfileEdit() {
+  state.currentView = 'profile-edit'
+  await loadOffices()
+  await loadUsers()
+  render()
+}
+
+function closeProfileEdit() {
+  state.currentView = 'main'
+  render()
+}
+
+async function handleProfileSave(e) {
+  e.preventDefault()
+  
+  const fullName = document.getElementById('full_name').value
+  const officeId = document.getElementById('office_id').value
+  const roleEl = document.getElementById('role')
+  const managerIdEl = document.getElementById('manager_id')
+  
+  const updateData = {
+    full_name: fullName,
+    office_id: officeId,
+    manager_id: managerIdEl?.value || null
+  }
+  
+  // Only executives can update role
+  if (roleEl && state.profile.role === 'executive') {
+    updateData.role = roleEl.value
+  }
+  
+  const updatedProfile = await updateProfile(state.profile.id, updateData)
+  
+  if (updatedProfile) {
+    alert('プロフィールを更新しました！')
+    state.profile = updatedProfile
+    closeProfileEdit()
   }
 }
 
@@ -150,7 +194,168 @@ async function loadDashboard() {
   }
 }
 
+// Offices API
+async function loadOffices() {
+  try {
+    const { data } = await api.get('/offices')
+    state.offices = data.offices
+    return data.offices
+  } catch (error) {
+    console.error('拠点一覧読み込みエラー:', error)
+    return []
+  }
+}
+
+// Users API
+async function loadUsers() {
+  try {
+    const { data } = await api.get('/users')
+    state.users = data.users
+    return data.users
+  } catch (error) {
+    console.error('ユーザー一覧読み込みエラー:', error)
+    return []
+  }
+}
+
+// Profile Update API
+async function updateProfile(profileId, updateData) {
+  try {
+    const { data } = await api.put(`/profiles/${profileId}`, updateData)
+    return data.profile
+  } catch (error) {
+    alert('プロフィール更新エラー: ' + (error.response?.data?.error || error.message))
+    return null
+  }
+}
+
 // ============= UI Components =============
+
+function ProfileEditPage() {
+  const offices = state.offices || []
+  const users = state.users || []
+  const managers = users.filter(u => u.role === 'manager')
+  const isExecutive = state.profile.role === 'executive'
+
+  return `
+    <div class="max-w-4xl mx-auto p-6">
+      <!-- Header -->
+      <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">
+          <i class="fas fa-user-edit mr-2"></i>
+          プロフィール編集
+        </h1>
+        <button onclick="closeProfileEdit()" class="text-gray-600 hover:text-gray-800">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+
+      <!-- Profile Form -->
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <form id="profile-form" onsubmit="handleProfileSave(event)">
+          <!-- 氏名 -->
+          <div class="mb-4">
+            <label class="block text-gray-700 font-semibold mb-2">
+              <i class="fas fa-user mr-2"></i>氏名
+            </label>
+            <input 
+              type="text" 
+              id="full_name" 
+              value="${state.profile.full_name || ''}"
+              class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            >
+          </div>
+
+          <!-- 所属拠点 -->
+          <div class="mb-4">
+            <label class="block text-gray-700 font-semibold mb-2">
+              <i class="fas fa-building mr-2"></i>所属拠点
+            </label>
+            <select 
+              id="office_id" 
+              class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            >
+              <option value="">選択してください</option>
+              ${offices.map(office => `
+                <option value="${office.id}" ${state.profile.office_id === office.id ? 'selected' : ''}>
+                  ${office.name}（${office.region}）
+                </option>
+              `).join('')}
+            </select>
+          </div>
+
+          <!-- 役割（Executiveのみ変更可能） -->
+          ${isExecutive ? `
+            <div class="mb-4">
+              <label class="block text-gray-700 font-semibold mb-2">
+                <i class="fas fa-user-tag mr-2"></i>役割
+              </label>
+              <select 
+                id="role" 
+                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="executive" ${state.profile.role === 'executive' ? 'selected' : ''}>経営者</option>
+                <option value="manager" ${state.profile.role === 'manager' ? 'selected' : ''}>拠点責任者</option>
+                <option value="member" ${state.profile.role === 'member' ? 'selected' : ''}>メンバー</option>
+              </select>
+            </div>
+          ` : `
+            <div class="mb-4">
+              <label class="block text-gray-700 font-semibold mb-2">
+                <i class="fas fa-user-tag mr-2"></i>役割
+              </label>
+              <input 
+                type="text" 
+                value="${state.profile.role === 'executive' ? '経営者' : state.profile.role === 'manager' ? '拠点責任者' : 'メンバー'}"
+                class="w-full px-4 py-2 border rounded-lg bg-gray-100"
+                disabled
+              >
+            </div>
+          `}
+
+          <!-- 直属の上司（Memberの場合のみ） -->
+          ${state.profile.role === 'member' || (isExecutive && document.getElementById('role')?.value === 'member') ? `
+            <div class="mb-4" id="manager-section">
+              <label class="block text-gray-700 font-semibold mb-2">
+                <i class="fas fa-user-tie mr-2"></i>直属の上司（拠点責任者）
+              </label>
+              <select 
+                id="manager_id" 
+                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">なし</option>
+                ${managers.map(manager => `
+                  <option value="${manager.id}" ${state.profile.manager_id === manager.id ? 'selected' : ''}>
+                    ${manager.full_name}（${manager.offices?.name || ''}）
+                  </option>
+                `).join('')}
+              </select>
+            </div>
+          ` : ''}
+
+          <!-- Submit Button -->
+          <div class="flex justify-end gap-3 mt-6">
+            <button 
+              type="button" 
+              onclick="closeProfileEdit()" 
+              class="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
+            >
+              キャンセル
+            </button>
+            <button 
+              type="submit" 
+              class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              <i class="fas fa-save mr-2"></i>保存
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `
+}
 
 function AuthPage() {
   return `
@@ -249,6 +454,10 @@ function MemberDashboard() {
               <i class="fas fa-user mr-1"></i>
               ${state.profile?.full_name || state.profile?.email}
             </span>
+            <button onclick="openProfileEdit()" class="text-blue-600 hover:text-blue-800">
+              <i class="fas fa-user-edit mr-1"></i>
+              プロフィール編集
+            </button>
             <button onclick="signout()" class="text-red-500 hover:text-red-700">
               <i class="fas fa-sign-out-alt mr-1"></i>
               ログアウト
@@ -509,6 +718,10 @@ function ExecutiveDashboard() {
               <i class="fas fa-user-tie mr-1"></i>
               ${state.profile?.full_name || state.profile?.email}
             </span>
+            <button onclick="openProfileEdit()" class="text-blue-600 hover:text-blue-800">
+              <i class="fas fa-user-edit mr-1"></i>
+              プロフィール編集
+            </button>
             <button onclick="signout()" class="text-red-500 hover:text-red-700">
               <i class="fas fa-sign-out-alt mr-1"></i>
               ログアウト
@@ -723,6 +936,12 @@ function render() {
 
   if (!state.profile) {
     app.innerHTML = '<div class="flex items-center justify-center min-h-screen"><div class="text-xl">Loading...</div></div>'
+    return
+  }
+
+  // Profile edit view
+  if (state.currentView === 'profile-edit') {
+    app.innerHTML = ProfileEditPage()
     return
   }
 
