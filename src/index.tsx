@@ -644,6 +644,7 @@ function assessInterventionLevel(work: any, checkins: any[]) {
 // ============= Frontend =============
 
 app.get('/', (c) => {
+  const version = Date.now() // Cache busting
   return c.html(`
     <!DOCTYPE html>
     <html lang="ja">
@@ -653,12 +654,12 @@ app.get('/', (c) => {
         <title>WorkFlow - 介入判断ダッシュボード</title>
         <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📊</text></svg>">
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
-        <link href="/static/styles.css" rel="stylesheet">
+        <link href="/static/styles.css?v=${version}" rel="stylesheet">
     </head>
     <body>
         <div id="app"></div>
         <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
-        <script src="/static/app.js"></script>
+        <script src="/static/app.js?v=${version}"></script>
     </body>
     </html>
   `)
