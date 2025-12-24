@@ -1097,7 +1097,7 @@ async function init() {
   if (state.token) {
     await loadProfile()
     if (state.profile) {
-      if (state.profile.role === 'executive') {
+      if (state.profile.role === 'regional_manager' || state.profile.role === 'base_manager') {
         await loadDashboard()
       } else {
         await loadWorks()
