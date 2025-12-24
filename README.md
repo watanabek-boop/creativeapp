@@ -9,7 +9,7 @@
 ## 🌐 URL
 
 - **開発サーバー**: https://3000-iq5cwww3s65s5jb9lsl9i-cbeee0f9.sandbox.novita.ai
-- **GitHub**: https://github.com/[username]/creative-app (作成予定)
+- **GitHub**: https://github.com/watanabek-boop/creativeapp
 
 ## 🎯 MVP機能（実装済み）
 
