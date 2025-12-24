@@ -255,8 +255,7 @@ app.get('/api/works', authMiddleware, async (c) => {
     .from('works')
     .select(`
       *, 
-      profiles(email, full_name, role, office_id, region),
-      offices(id, name, region),
+      profiles(email, full_name, role),
       checkins(id, created_at, unknowns_decreased, unknowns_increased, decision_progressed, decision_stalled, no_change)
     `)
     .eq('status', 'open')
@@ -466,7 +465,7 @@ app.get('/api/dashboard', authMiddleware, async (c) => {
   // Build query based on role
   let query = supabase
     .from('works')
-    .select('*, profiles(email, full_name, office_id, region), offices(id, name, region)')
+    .select('*, profiles(email, full_name)')
     .eq('status', 'open')
     .order('created_at', { ascending: false })
 
