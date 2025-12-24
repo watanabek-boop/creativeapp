@@ -823,7 +823,7 @@ function ManagerDashboard() {
                           <h3 class="text-lg font-semibold text-gray-800">${item.goal_state}</h3>
                         </div>
                         <div class="text-sm text-gray-600">
-                          <span><i class="fas fa-user mr-1"></i>${item.profiles.full_name}</span>
+                          <span><i class="fas fa-user mr-1"></i>${item.user?.full_name || item.profiles?.full_name || 'Unknown'}</span>
                           <span class="ml-4"><i class="fas fa-clock mr-1"></i>最終チェックイン: ${
                             item.intervention.lastCheckin 
                               ? new Date(item.intervention.lastCheckin).toLocaleDateString('ja-JP') + ' (' + item.intervention.daysSinceLastCheckin + '日前)'
