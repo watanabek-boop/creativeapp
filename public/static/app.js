@@ -140,13 +140,19 @@ async function loadWorks() {
   }
 }
 
-async function createWork(goalState, unknowns, waitingOn) {
+async function createWork(goalState, unknowns, waitingOn, userId = null, officeId = null) {
   try {
-    await api.post('/works', {
+    const payload = {
       goal_state: goalState,
       unknowns: unknowns,
       waiting_on: waitingOn
-    })
+    }
+    
+    // Add user_id and office_id if provided (for Executive/Manager assignment)
+    if (userId) payload.user_id = userId
+    if (officeId) payload.office_id = officeId
+    
+    await api.post('/works', payload)
     await loadWorks()
     return true
   } catch (error) {
@@ -746,6 +752,47 @@ function ExecutiveDashboard() {
           </div>
         </div>
 
+        <!-- Work Creation Button (Executive) -->
+        <div class="mb-6 flex justify-end">
+          <button onclick="showCreateWorkForm()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">
+            <i class="fas fa-plus mr-2"></i>
+            新規Work作成（メンバーに割り当て）
+          </button>
+        </div>
+
+        <!-- Work Creation Form (shared) -->
+        <div id="createWorkForm" class="hidden bg-white rounded-lg shadow p-6 mb-6">
+          <h3 class="text-lg font-semibold mb-4">新しいWork</h3>
+          <form onsubmit="handleCreateWork(event)" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">ゴール（状態で書く）</label>
+              <input type="text" name="goalState" required 
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="例: 新規顧客3社と契約が完了している">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">未確定なこと</label>
+              <textarea name="unknowns" required rows="3"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="例: 価格設定が未確定\n競合との差別化ポイントが不明確"></textarea>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">判断待ちの相手</label>
+              <input type="text" name="waitingOn" 
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="例: 営業部長、CFO">
+            </div>
+            <div class="flex gap-2">
+              <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">
+                作成
+              </button>
+              <button type="button" onclick="hideCreateWorkForm()" class="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400">
+                キャンセル
+              </button>
+            </div>
+          </form>
+        </div>
+
         ${state.dashboard.length === 0 ? `
           <div class="bg-white rounded-lg shadow p-8 text-center text-gray-500">
             <i class="fas fa-inbox text-4xl mb-4"></i>
@@ -862,22 +909,102 @@ async function handleSignup(e) {
   )
 }
 
-function showCreateWorkForm() {
-  document.getElementById('createWorkForm').classList.remove('hidden')
+async function showCreateWorkForm() {
+  // Load users and offices for Executive/Manager
+  if (state.profile.role === 'executive' || state.profile.role === 'manager') {
+    await loadUsers()
+    await loadOffices()
+  }
+  
+  // Update form with assignment options
+  const form = document.getElementById('createWorkForm')
+  form.classList.remove('hidden')
+  
+  // Inject member selection if role allows
+  if (state.profile.role === 'executive' || state.profile.role === 'manager') {
+    const assignmentSection = document.getElementById('assignmentSection')
+    if (!assignmentSection) {
+      const formElement = form.querySelector('form')
+      const buttonDiv = formElement.querySelector('.flex.gap-2')
+      
+      const html = `
+        <div id="assignmentSection">
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              <i class="fas fa-user mr-1"></i>担当者を選択（オプション）
+            </label>
+            <select name="userId" 
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              onchange="handleUserSelection(this.value)">
+              <option value="">自分</option>
+              ${(state.users || []).filter(u => u.role === 'member').map(user => `
+                <option value="${user.id}">
+                  ${user.full_name}（${user.offices?.name || ''}）
+                </option>
+              `).join('')}
+            </select>
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              <i class="fas fa-building mr-1"></i>所属拠点（オプション）
+            </label>
+            <select name="officeId" 
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+              <option value="">デフォルト（担当者の拠点）</option>
+              ${(state.offices || []).map(office => `
+                <option value="${office.id}">
+                  ${office.name}（${office.region}）
+                </option>
+              `).join('')}
+            </select>
+          </div>
+        </div>
+      `
+      buttonDiv.insertAdjacentHTML('beforebegin', html)
+    }
+  }
+}
+
+function handleUserSelection(userId) {
+  // Auto-fill office based on selected user
+  if (userId) {
+    const user = state.users.find(u => u.id === userId)
+    if (user && user.office_id) {
+      const officeSelect = document.querySelector('select[name="officeId"]')
+      if (officeSelect) {
+        officeSelect.value = user.office_id
+      }
+    }
+  }
 }
 
 function hideCreateWorkForm() {
-  document.getElementById('createWorkForm').classList.add('hidden')
+  const form = document.getElementById('createWorkForm')
+  form.classList.add('hidden')
+  
+  // Remove assignment section to refresh it next time
+  const assignmentSection = document.getElementById('assignmentSection')
+  if (assignmentSection) {
+    assignmentSection.remove()
+  }
 }
 
 async function handleCreateWork(e) {
   e.preventDefault()
   const formData = new FormData(e.target)
+  
+  // Get optional fields for Executive/Manager
+  const userId = formData.get('userId') || null
+  const officeId = formData.get('officeId') || null
+  
   const success = await createWork(
     formData.get('goalState'),
     formData.get('unknowns'),
-    formData.get('waitingOn')
+    formData.get('waitingOn'),
+    userId,
+    officeId
   )
+  
   if (success) {
     e.target.reset()
     hideCreateWorkForm()
