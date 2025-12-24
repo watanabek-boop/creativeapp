@@ -1076,7 +1076,8 @@ async function showCreateWorkForm() {
         .filter(u => u.role === 'member')
         .map(user => {
           const officeName = user.offices?.name || ''
-          return `<option value="${user.id}">${user.full_name}（${officeName}）</option>`
+          const fullName = user.full_name || ''
+          return '<option value="' + user.id + '">' + fullName + '（' + officeName + '）</option>'
         })
         .join('')
       userSelect.innerHTML = '<option value="">選択してください</option>' + memberOptions
