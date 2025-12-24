@@ -102,8 +102,8 @@ async function handleProfileSave(e) {
     manager_id: managerIdEl?.value || null
   }
   
-  // Only executives can update role
-  if (roleEl && state.profile.role === 'executive') {
+  // Only regional_manager can update role
+  if (roleEl && state.profile.role === 'regional_manager') {
     updateData.role = roleEl.value
   }
   
@@ -240,8 +240,8 @@ async function updateProfile(profileId, updateData) {
 function ProfileEditPage() {
   const offices = state.offices || []
   const users = state.users || []
-  const managers = users.filter(u => u.role === 'manager')
-  const isExecutive = state.profile.role === 'executive'
+  const managers = users.filter(u => u.role === 'base_manager')
+  const isRegionalManager = state.profile.role === 'regional_manager'
 
   return `
     <div class="max-w-4xl mx-auto p-6">
@@ -292,8 +292,8 @@ function ProfileEditPage() {
             </select>
           </div>
 
-          <!-- 役割（Executiveのみ変更可能） -->
-          ${isExecutive ? `
+          <!-- 役割（地域責任者のみ変更可能） -->
+          ${isRegionalManager ? `
             <div class="mb-4">
               <label class="block text-gray-700 font-semibold mb-2">
                 <i class="fas fa-user-tag mr-2"></i>役割
@@ -302,8 +302,8 @@ function ProfileEditPage() {
                 id="role" 
                 class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="executive" ${state.profile.role === 'executive' ? 'selected' : ''}>経営者</option>
-                <option value="manager" ${state.profile.role === 'manager' ? 'selected' : ''}>拠点責任者</option>
+                <option value="regional_manager" ${state.profile.role === 'regional_manager' ? 'selected' : ''}>地域責任者</option>
+                <option value="base_manager" ${state.profile.role === 'base_manager' ? 'selected' : ''}>拠点責任者</option>
                 <option value="member" ${state.profile.role === 'member' ? 'selected' : ''}>メンバー</option>
               </select>
             </div>
@@ -314,7 +314,7 @@ function ProfileEditPage() {
               </label>
               <input 
                 type="text" 
-                value="${state.profile.role === 'executive' ? '経営者' : state.profile.role === 'manager' ? '拠点責任者' : 'メンバー'}"
+                value="${state.profile.role === 'regional_manager' ? '地域責任者' : state.profile.role === 'base_manager' ? '拠点責任者' : 'メンバー'}"
                 class="w-full px-4 py-2 border rounded-lg bg-gray-100"
                 disabled
               >
@@ -322,7 +322,7 @@ function ProfileEditPage() {
           `}
 
           <!-- 直属の上司（Memberの場合のみ） -->
-          ${state.profile.role === 'member' || (isExecutive && document.getElementById('role')?.value === 'member') ? `
+          ${state.profile.role === 'member' || (isRegionalManager && document.getElementById('role')?.value === 'member') ? `
             <div class="mb-4" id="manager-section">
               <label class="block text-gray-700 font-semibold mb-2">
                 <i class="fas fa-user-tie mr-2"></i>直属の上司（拠点責任者）
@@ -702,10 +702,15 @@ function WorkDetailPage() {
   `
 }
 
-function ExecutiveDashboard() {
+function ManagerDashboard() {
   const redWorks = state.dashboard.filter(w => w.intervention.level === 'red')
   const yellowWorks = state.dashboard.filter(w => w.intervention.level === 'yellow')
   const greenWorks = state.dashboard.filter(w => w.intervention.level === 'green')
+  
+  const roleLabel = state.profile.role === 'regional_manager' ? '地域責任者' : '拠点責任者'
+  const scopeLabel = state.profile.role === 'regional_manager' 
+    ? `（${state.profile.region || ''}地域）` 
+    : `（${state.profile.offices?.name || '拠点'}）`
 
   return `
     <div class="min-h-screen bg-gray-50">
@@ -713,7 +718,7 @@ function ExecutiveDashboard() {
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <h1 class="text-2xl font-bold text-gray-800">
             <i class="fas fa-chart-line mr-2"></i>
-            介入判断ダッシュボード
+            介入判断ダッシュボード ${scopeLabel}
           </h1>
           <div class="flex items-center gap-4">
             <button onclick="loadDashboard()" class="text-blue-500 hover:text-blue-700">
@@ -722,7 +727,7 @@ function ExecutiveDashboard() {
             </button>
             <span class="text-gray-600">
               <i class="fas fa-user-tie mr-1"></i>
-              ${state.profile?.full_name || state.profile?.email}
+              ${state.profile?.full_name || state.profile?.email}（${roleLabel}）
             </span>
             <button onclick="openProfileEdit()" class="text-blue-600 hover:text-blue-800">
               <i class="fas fa-user-edit mr-1"></i>
@@ -910,8 +915,8 @@ async function handleSignup(e) {
 }
 
 async function showCreateWorkForm() {
-  // Load users and offices for Executive/Manager
-  if (state.profile.role === 'executive' || state.profile.role === 'manager') {
+  // Load users and offices for managers
+  if (state.profile.role === 'regional_manager' || state.profile.role === 'base_manager') {
     await loadUsers()
     await loadOffices()
   }
@@ -921,7 +926,7 @@ async function showCreateWorkForm() {
   form.classList.remove('hidden')
   
   // Inject member selection if role allows
-  if (state.profile.role === 'executive' || state.profile.role === 'manager') {
+  if (state.profile.role === 'regional_manager' || state.profile.role === 'base_manager') {
     const assignmentSection = document.getElementById('assignmentSection')
     if (!assignmentSection) {
       const formElement = form.querySelector('form')
@@ -1077,8 +1082,9 @@ function render() {
     return
   }
 
-  if (state.profile.role === 'executive') {
-    app.innerHTML = ExecutiveDashboard()
+  // Dashboard routing based on role
+  if (state.profile.role === 'regional_manager' || state.profile.role === 'base_manager') {
+    app.innerHTML = ManagerDashboard()
   } else {
     app.innerHTML = MemberDashboard()
   }

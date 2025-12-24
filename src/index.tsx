@@ -136,22 +136,27 @@ app.get('/api/users', authMiddleware, async (c) => {
   const user = c.get('user')
   const supabase = c.get('supabase')
 
-  // Get user profile to check role
+  // Get user profile to check role and region
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role, office_id')
+    .select('role, office_id, region')
     .eq('id', user.id)
     .single()
 
   let query = supabase
     .from('profiles')
-    .select('id, email, full_name, role, office_id, offices(id, name, region)')
+    .select('id, email, full_name, role, office_id, region, offices(id, name, region)')
     .order('full_name', { ascending: true })
 
-  // If manager, only show users from same office
-  if (profile?.role === 'manager') {
+  // Regional manager: show all users in the same region
+  if (profile?.role === 'regional_manager') {
+    query = query.eq('region', profile.region)
+  }
+  // Base manager: show only users from same office
+  else if (profile?.role === 'base_manager') {
     query = query.eq('office_id', profile.office_id)
   }
+  // Member: no access to user list (will return empty or their own profile)
 
   const { data: users, error } = await query
 
@@ -168,24 +173,55 @@ app.put('/api/profiles/:id', authMiddleware, async (c) => {
   const user = c.get('user')
   const supabase = c.get('supabase')
   const profileId = c.req.param('id')
-  const { full_name, office_id, manager_id, role } = await c.req.json()
+  const { full_name, office_id, manager_id, role, region } = await c.req.json()
 
   // Get user profile to check role
   const { data: currentProfile } = await supabase
     .from('profiles')
-    .select('role')
+    .select('role, region, office_id')
     .eq('id', user.id)
     .single()
 
   // Check if user has permission to update this profile
-  if (user.id !== profileId && currentProfile?.role !== 'executive' && currentProfile?.role !== 'manager') {
-    return c.json({ error: 'Unauthorized' }, 403)
+  // Self edit: always allowed
+  // Regional manager: can edit users in their region
+  // Base manager: can edit users in their office
+  if (user.id !== profileId) {
+    if (currentProfile?.role === 'regional_manager') {
+      // Check if target user is in the same region
+      const { data: targetProfile } = await supabase
+        .from('profiles')
+        .select('region')
+        .eq('id', profileId)
+        .single()
+      
+      if (targetProfile?.region !== currentProfile.region) {
+        return c.json({ error: 'Unauthorized: Cannot edit users outside your region' }, 403)
+      }
+    } else if (currentProfile?.role === 'base_manager') {
+      // Check if target user is in the same office
+      const { data: targetProfile } = await supabase
+        .from('profiles')
+        .select('office_id')
+        .eq('id', profileId)
+        .single()
+      
+      if (targetProfile?.office_id !== currentProfile.office_id) {
+        return c.json({ error: 'Unauthorized: Cannot edit users outside your office' }, 403)
+      }
+    } else {
+      // Members can only edit themselves
+      return c.json({ error: 'Unauthorized' }, 403)
+    }
   }
 
-  // Only executive can change role
+  // Build update data
   const updateData: any = { full_name, office_id, manager_id }
-  if (currentProfile?.role === 'executive' && role) {
-    updateData.role = role
+  
+  // Only regional_manager can change role and region
+  if (currentProfile?.role === 'regional_manager') {
+    if (role) updateData.role = role
+    if (region) updateData.region = region
   }
 
   const { data: profile, error } = await supabase
@@ -208,10 +244,10 @@ app.get('/api/works', authMiddleware, async (c) => {
   const user = c.get('user')
   const supabase = c.get('supabase')
 
-  // Get user profile to check role
+  // Get user profile to check role, region, and office
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role')
+    .select('role, region, office_id')
     .eq('id', user.id)
     .single()
 
@@ -219,14 +255,32 @@ app.get('/api/works', authMiddleware, async (c) => {
     .from('works')
     .select(`
       *, 
-      profiles(email, full_name, role),
+      profiles(email, full_name, role, office_id, region),
+      offices(id, name, region),
       checkins(id, created_at, unknowns_decreased, unknowns_increased, decision_progressed, decision_stalled, no_change)
     `)
     .eq('status', 'open')
     .order('created_at', { ascending: false })
 
-  // If member, only show their own works
-  if (profile?.role === 'member') {
+  // Regional manager: show all works in their region
+  if (profile?.role === 'regional_manager') {
+    // Filter by region through offices table
+    const { data: offices } = await supabase
+      .from('offices')
+      .select('id')
+      .eq('region', profile.region)
+    
+    const officeIds = offices?.map(o => o.id) || []
+    if (officeIds.length > 0) {
+      query = query.in('office_id', officeIds)
+    }
+  }
+  // Base manager: show only works from their office
+  else if (profile?.role === 'base_manager') {
+    query = query.eq('office_id', profile.office_id)
+  }
+  // Member: show only their own works
+  else if (profile?.role === 'member') {
     query = query.eq('user_id', user.id)
   }
 
@@ -252,17 +306,17 @@ app.post('/api/works', authMiddleware, async (c) => {
   const supabase = c.get('supabase')
   const { goal_state, unknowns, waiting_on, user_id, office_id } = await c.req.json()
 
-  // Get user profile to check role
+  // Get user profile to check role, region, and office
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role, office_id')
+    .select('role, office_id, region')
     .eq('id', user.id)
     .single()
 
   // Determine the actual user_id for the work
-  // If executive/manager assigns to someone, use provided user_id
-  // Otherwise, use current user's id
-  const actualUserId = (profile?.role === 'executive' || profile?.role === 'manager') && user_id 
+  // Regional manager and base manager can assign to others
+  // Members can only create for themselves
+  const actualUserId = (profile?.role === 'regional_manager' || profile?.role === 'base_manager') && user_id 
     ? user_id 
     : user.id
 
@@ -397,23 +451,43 @@ app.get('/api/dashboard', authMiddleware, async (c) => {
   const user = c.get('user')
   const supabase = c.get('supabase')
 
-  // Verify executive role
+  // Get user profile to check role, region, and office
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role')
+    .select('role, region, office_id')
     .eq('id', user.id)
     .single()
 
-  if (profile?.role !== 'executive') {
-    return c.json({ error: 'Forbidden - Executive only' }, 403)
+  // Only managers can access dashboard
+  if (profile?.role !== 'regional_manager' && profile?.role !== 'base_manager') {
+    return c.json({ error: 'Forbidden - Manager access required' }, 403)
   }
 
-  // Get all open works with their checkins
-  const { data: works, error } = await supabase
+  // Build query based on role
+  let query = supabase
     .from('works')
-    .select('*, profiles(email, full_name)')
+    .select('*, profiles(email, full_name, office_id, region), offices(id, name, region)')
     .eq('status', 'open')
     .order('created_at', { ascending: false })
+
+  // Regional manager: show all works in their region
+  if (profile?.role === 'regional_manager') {
+    const { data: offices } = await supabase
+      .from('offices')
+      .select('id')
+      .eq('region', profile.region)
+    
+    const officeIds = offices?.map(o => o.id) || []
+    if (officeIds.length > 0) {
+      query = query.in('office_id', officeIds)
+    }
+  }
+  // Base manager: show only works from their office
+  else if (profile?.role === 'base_manager') {
+    query = query.eq('office_id', profile.office_id)
+  }
+
+  const { data: works, error } = await query
 
   if (error) {
     return c.json({ error: error.message }, 400)
