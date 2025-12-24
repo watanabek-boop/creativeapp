@@ -349,7 +349,7 @@ app.get('/api/works/:id', authMiddleware, async (c) => {
 
   const { data: work, error } = await supabase
     .from('works')
-    .select('*, profiles(email, full_name, role)')
+    .select('*, user:profiles!user_id(email, full_name, role)')
     .eq('id', workId)
     .single()
 
@@ -360,11 +360,31 @@ app.get('/api/works/:id', authMiddleware, async (c) => {
   // Check if user has access
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role')
+    .select('role, office_id, region')
     .eq('id', user.id)
     .single()
 
-  if (profile?.role !== 'executive' && work.user_id !== user.id) {
+  // Regional manager: can view all works in their region
+  // Base manager: can view works in their office
+  // Member: can only view their own works
+  let hasAccess = false
+  if (profile?.role === 'regional_manager') {
+    // Check if work's office is in the same region
+    if (work.office_id) {
+      const { data: workOffice } = await supabase
+        .from('offices')
+        .select('region')
+        .eq('id', work.office_id)
+        .single()
+      hasAccess = workOffice?.region === profile.region
+    }
+  } else if (profile?.role === 'base_manager') {
+    hasAccess = work.office_id === profile.office_id
+  } else if (profile?.role === 'member') {
+    hasAccess = work.user_id === user.id
+  }
+
+  if (!hasAccess) {
     return c.json({ error: 'Forbidden' }, 403)
   }
 
