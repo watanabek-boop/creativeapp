@@ -1072,12 +1072,14 @@ async function showCreateWorkForm() {
     if (assignSection) {
       assignSection.style.display = 'block'
       const userSelect = document.getElementById('userSelect')
-      userSelect.innerHTML = '<option value="">選択してください</option>' +
-        (state.users || []).filter(u => u.role === 'member').map(user => `
-          <option value="${user.id}">
-            ${user.full_name}（${user.offices?.name || ''}）
-          </option>
-        `).join('')
+      const memberOptions = (state.users || [])
+        .filter(u => u.role === 'member')
+        .map(user => {
+          const officeName = user.offices?.name || ''
+          return `<option value="${user.id}">${user.full_name}（${officeName}）</option>`
+        })
+        .join('')
+      userSelect.innerHTML = '<option value="">選択してください</option>' + memberOptions
     }
   }
 }
