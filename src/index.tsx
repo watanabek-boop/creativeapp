@@ -14,7 +14,7 @@ const app = new Hono<{ Bindings: Bindings }>()
 app.use('/api/*', cors())
 
 // Serve static files
-app.use('/static/*', serveStatic({ root: './public' }))
+app.use('/static/*', serveStatic({ root: './' }))
 
 // Supabase client helper
 function getSupabaseClient(c: any) {
