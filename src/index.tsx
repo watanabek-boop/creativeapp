@@ -650,18 +650,11 @@ app.get('/', (c) => {
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Creative App - 介入判断ダッシュボード</title>
-        <script src="https://cdn.tailwindcss.com"></script>
+        <title>WorkFlow - 介入判断ダッシュボード</title>
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
-        <style>
-          .card { transition: all 0.3s ease; }
-          .card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-          .level-red { border-left: 4px solid #ef4444; }
-          .level-yellow { border-left: 4px solid #f59e0b; }
-          .level-green { border-left: 4px solid #10b981; }
-        </style>
+        <link href="/static/styles.css" rel="stylesheet">
     </head>
-    <body class="bg-gray-50">
+    <body>
         <div id="app"></div>
         <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
         <script src="/static/app.js"></script>

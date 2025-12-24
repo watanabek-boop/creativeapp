@@ -709,171 +709,312 @@ function ManagerDashboard() {
   
   const roleLabel = state.profile.role === 'regional_manager' ? '地域責任者' : '拠点責任者'
   const scopeLabel = state.profile.role === 'regional_manager' 
-    ? `（${state.profile.region || ''}地域）` 
-    : `（${state.profile.offices?.name || '拠点'}）`
+    ? state.profile.region || '地域' 
+    : state.profile.offices?.name || '拠点'
+    
+  const userName = state.profile?.full_name || state.profile?.email || 'User'
+  const userInitial = userName.charAt(0).toUpperCase()
 
   return `
-    <div class="min-h-screen bg-gray-50">
-      <nav class="bg-white shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <h1 class="text-2xl font-bold text-gray-800">
-            <i class="fas fa-chart-line mr-2"></i>
-            介入判断ダッシュボード ${scopeLabel}
-          </h1>
-          <div class="flex items-center gap-4">
-            <button onclick="loadDashboard()" class="text-blue-500 hover:text-blue-700">
-              <i class="fas fa-sync-alt mr-1"></i>
-              更新
-            </button>
-            <span class="text-gray-600">
-              <i class="fas fa-user-tie mr-1"></i>
-              ${state.profile?.full_name || state.profile?.email}（${roleLabel}）
-            </span>
-            <button onclick="openProfileEdit()" class="text-blue-600 hover:text-blue-800">
-              <i class="fas fa-user-edit mr-1"></i>
-              プロフィール編集
-            </button>
-            <button onclick="signout()" class="text-red-500 hover:text-red-700">
-              <i class="fas fa-sign-out-alt mr-1"></i>
-              ログアウト
-            </button>
-          </div>
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-icon">
+          <i class="fas fa-chart-line"></i>
         </div>
-      </nav>
-
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div class="grid grid-cols-3 gap-4 mb-8">
-          <div class="bg-white rounded-lg shadow p-6 text-center">
-            <div class="text-4xl font-bold text-red-500">${redWorks.length}</div>
-            <div class="text-gray-600 mt-2">🔴 今すぐ介入</div>
-          </div>
-          <div class="bg-white rounded-lg shadow p-6 text-center">
-            <div class="text-4xl font-bold text-yellow-500">${yellowWorks.length}</div>
-            <div class="text-gray-600 mt-2">🟡 そろそろ確認</div>
-          </div>
-          <div class="bg-white rounded-lg shadow p-6 text-center">
-            <div class="text-4xl font-bold text-green-500">${greenWorks.length}</div>
-            <div class="text-gray-600 mt-2">🟢 放置OK</div>
-          </div>
-        </div>
-
-        <!-- Work Creation Button (Executive) -->
-        <div class="mb-6 flex justify-end">
-          <button onclick="showCreateWorkForm()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">
-            <i class="fas fa-plus mr-2"></i>
-            新規Work作成（メンバーに割り当て）
-          </button>
-        </div>
-
-        <!-- Work Creation Form (shared) -->
-        <div id="createWorkForm" class="hidden bg-white rounded-lg shadow p-6 mb-6">
-          <h3 class="text-lg font-semibold mb-4">新しいWork</h3>
-          <form onsubmit="handleCreateWork(event)" class="space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">ゴール（状態で書く）</label>
-              <input type="text" name="goalState" required 
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                placeholder="例: 新規顧客3社と契約が完了している">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">未確定なこと</label>
-              <textarea name="unknowns" required rows="3"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                placeholder="例: 価格設定が未確定\n競合との差別化ポイントが不明確"></textarea>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">判断待ちの相手</label>
-              <input type="text" name="waitingOn" 
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                placeholder="例: 営業部長、CFO">
-            </div>
-            <div class="flex gap-2">
-              <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">
-                作成
-              </button>
-              <button type="button" onclick="hideCreateWorkForm()" class="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400">
-                キャンセル
-              </button>
-            </div>
-          </form>
-        </div>
-
-        ${state.dashboard.length === 0 ? `
-          <div class="bg-white rounded-lg shadow p-8 text-center text-gray-500">
-            <i class="fas fa-inbox text-4xl mb-4"></i>
-            <p>現在進行中のWorkはありません</p>
-          </div>
-        ` : `
-          <div class="space-y-4">
-            ${state.dashboard.map(item => {
-              const levelColors = {
-                red: { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-700', icon: '🔴' },
-                yellow: { bg: 'bg-yellow-50', border: 'border-yellow-200', text: 'text-yellow-700', icon: '🟡' },
-                green: { bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-700', icon: '🟢' }
-              }
-              const colors = levelColors[item.intervention.level]
-
-              return `
-                <div class="bg-white rounded-lg shadow card level-${item.intervention.level}">
-                  <div class="p-6">
-                    <div class="flex justify-between items-start mb-4">
-                      <div class="flex-1">
-                        <div class="flex items-center gap-2 mb-2">
-                          <span class="text-2xl">${colors.icon}</span>
-                          <h3 class="text-lg font-semibold text-gray-800">${item.goal_state}</h3>
-                        </div>
-                        <div class="text-sm text-gray-600">
-                          <span><i class="fas fa-user mr-1"></i>${item.user?.full_name || item.profiles?.full_name || 'Unknown'}</span>
-                          <span class="ml-4"><i class="fas fa-clock mr-1"></i>最終チェックイン: ${
-                            item.intervention.lastCheckin 
-                              ? new Date(item.intervention.lastCheckin).toLocaleDateString('ja-JP') + ' (' + item.intervention.daysSinceLastCheckin + '日前)'
-                              : 'なし'
-                          }</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div class="${colors.bg} border ${colors.border} rounded-lg p-4 mb-3">
-                      <div class="font-semibold ${colors.text} mb-2">判定理由:</div>
-                      <ul class="list-disc list-inside space-y-1 text-sm ${colors.text}">
-                        ${item.intervention.reasons.map(r => `<li>${r}</li>`).join('')}
-                      </ul>
-                    </div>
-
-                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <div class="font-semibold text-blue-700 mb-2">
-                        <i class="fas fa-lightbulb mr-1"></i>
-                        推奨アクション:
-                      </div>
-                      <ul class="list-disc list-inside space-y-1 text-sm text-blue-700">
-                        ${item.intervention.actions.map(a => `<li>${a}</li>`).join('')}
-                      </ul>
-                    </div>
-
-                    <div class="mt-4 pt-4 border-t border-gray-200 text-sm text-gray-600">
-                      <details>
-                        <summary class="cursor-pointer hover:text-blue-500">Work詳細を表示</summary>
-                        <div class="mt-3 space-y-2">
-                          <div>
-                            <strong>未確定事項:</strong>
-                            <p class="whitespace-pre-wrap text-gray-700 mt-1">${item.unknowns}</p>
-                          </div>
-                          ${item.waiting_on ? `
-                            <div>
-                              <strong>判断待ち:</strong> ${item.waiting_on}
-                            </div>
-                          ` : ''}
-                        </div>
-                      </details>
-                    </div>
-                  </div>
-                </div>
-              `
-            }).join('')}
-          </div>
-        `}
+        <div class="sidebar-logo-text">WorkFlow</div>
+      </div>
+      
+      <div class="sidebar-section-title">OVERVIEW</div>
+      <div class="sidebar-menu-item active">
+        <i class="fas fa-th-large"></i>
+        <span>Dashboard</span>
+      </div>
+      <div class="sidebar-menu-item" onclick="openProfileEdit()">
+        <i class="fas fa-user"></i>
+        <span>Profile</span>
+      </div>
+      
+      <div class="sidebar-section-title">ACTIONS</div>
+      <div class="sidebar-menu-item" onclick="showCreateWorkForm()">
+        <i class="fas fa-plus"></i>
+        <span>New Work</span>
+      </div>
+      <div class="sidebar-menu-item" onclick="loadDashboard()">
+        <i class="fas fa-sync-alt"></i>
+        <span>Refresh</span>
+      </div>
+      
+      <div class="sidebar-section-title">SETTINGS</div>
+      <div class="sidebar-menu-item" onclick="signout()">
+        <i class="fas fa-sign-out-alt"></i>
+        <span>Logout</span>
       </div>
     </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Header -->
+      <div class="header">
+        <div class="header-search">
+          <input type="text" placeholder="Search your course..." />
+        </div>
+        <div class="header-actions">
+          <button class="header-icon-btn">
+            <i class="fas fa-envelope"></i>
+          </button>
+          <button class="header-icon-btn">
+            <i class="fas fa-bell"></i>
+          </button>
+          <div class="header-profile">
+            <div class="header-profile-avatar">${userInitial}</div>
+            <div class="header-profile-name">${userName}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hero Banner -->
+      <div class="hero-banner">
+        <h2>介入判断ダッシュボード</h2>
+        <p>${scopeLabel} のメンバーWork状況を監視しています</p>
+        <button class="hero-btn" onclick="showCreateWorkForm()">
+          <i class="fas fa-plus"></i>
+          New Work
+          <i class="fas fa-arrow-right"></i>
+        </button>
+      </div>
+
+      <!-- Progress Cards -->
+      <div class="progress-cards">
+        <div class="progress-card">
+          <div class="progress-card-header">
+            <div class="progress-card-icon pink">
+              <i class="fas fa-fire"></i>
+            </div>
+            <div class="progress-card-progress">${redWorks.length}/${state.dashboard.length}</div>
+          </div>
+          <div class="progress-card-title">今すぐ介入</div>
+          <div class="progress-card-subtitle">🔴 Urgent Intervention</div>
+        </div>
+        
+        <div class="progress-card">
+          <div class="progress-card-header">
+            <div class="progress-card-icon purple">
+              <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="progress-card-progress">${yellowWorks.length}/${state.dashboard.length}</div>
+          </div>
+          <div class="progress-card-title">そろそろ確認</div>
+          <div class="progress-card-subtitle">🟡 Check Soon</div>
+        </div>
+        
+        <div class="progress-card">
+          <div class="progress-card-header">
+            <div class="progress-card-icon blue">
+              <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="progress-card-progress">${greenWorks.length}/${state.dashboard.length}</div>
+          </div>
+          <div class="progress-card-title">放置OK</div>
+          <div class="progress-card-subtitle">🟢 All Good</div>
+        </div>
+      </div>
+
+      <!-- Work Creation Form -->
+      <div id="createWorkForm" style="display: none;" class="statistic-card" style="margin-bottom: 32px;">
+        <h3 class="section-title" style="margin-bottom: 16px;">新しいWork</h3>
+        <form onsubmit="handleCreateWork(event)" style="display: flex; flex-direction: column; gap: 16px;">
+          <div>
+            <label style="display: block; font-size: 14px; font-weight: 600; color: var(--gray-700); margin-bottom: 8px;">ゴール（状態で書く）</label>
+            <input type="text" name="goalState" required 
+              style="width: 100%; padding: 12px; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 14px;"
+              placeholder="例: 新規顧客3社と契約が完了している">
+          </div>
+          <div>
+            <label style="display: block; font-size: 14px; font-weight: 600; color: var(--gray-700); margin-bottom: 8px;">未確定なこと</label>
+            <textarea name="unknowns" required rows="3"
+              style="width: 100%; padding: 12px; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 14px; resize: vertical;"
+              placeholder="例: 価格設定が未確定&#10;競合との差別化ポイントが不明確"></textarea>
+          </div>
+          <div>
+            <label style="display: block; font-size: 14px; font-weight: 600; color: var(--gray-700); margin-bottom: 8px;">判断待ちの相手</label>
+            <input type="text" name="waitingOn" 
+              style="width: 100%; padding: 12px; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 14px;"
+              placeholder="例: 営業部長、CFO">
+          </div>
+          <div id="assignMemberSection" style="display: none;">
+            <label style="display: block; font-size: 14px; font-weight: 600; color: var(--gray-700); margin-bottom: 8px;">担当者を選択</label>
+            <select name="userId" id="userSelect"
+              style="width: 100%; padding: 12px; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 14px;">
+              <option value="">選択してください</option>
+            </select>
+          </div>
+          <div style="display: flex; gap: 12px;">
+            <button type="submit" class="btn-primary">
+              <i class="fas fa-check"></i>
+              作成
+            </button>
+            <button type="button" onclick="hideCreateWorkForm()" class="btn-secondary">
+              キャンセル
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Content Grid -->
+      <div class="content-grid">
+        <!-- Works Section -->
+        <div>
+          <div class="section-header">
+            <h3 class="section-title">進行中のWork</h3>
+            <a class="section-action" onclick="loadDashboard()">
+              See all
+              <i class="fas fa-arrow-right"></i>
+            </a>
+          </div>
+          
+          ${state.dashboard.length === 0 ? `
+            <div class="statistic-card" style="text-align: center; padding: 48px 24px;">
+              <i class="fas fa-inbox" style="font-size: 48px; color: var(--gray-300); margin-bottom: 16px;"></i>
+              <p style="color: var(--gray-600);">現在進行中のWorkはありません</p>
+            </div>
+          ` : `
+            <div class="work-cards">
+              ${state.dashboard.map(item => {
+                const levelBadges = {
+                  red: { class: 'pink', label: 'URGENT', icon: '🔴' },
+                  yellow: { class: 'purple', label: 'CHECK', icon: '🟡' },
+                  green: { class: 'blue', label: 'OK', icon: '🟢' }
+                }
+                const badge = levelBadges[item.intervention.level]
+                const userInitial = (item.user?.full_name || item.profiles?.full_name || 'U').charAt(0).toUpperCase()
+
+                return `
+                  <div class="work-card">
+                    <div class="work-card-image" style="display: flex; align-items: center; justify-content: center; font-size: 48px;">
+                      ${badge.icon}
+                    </div>
+                    <div class="work-card-content">
+                      <span class="work-card-badge ${badge.class}">${badge.label}</span>
+                      <h4 class="work-card-title">${item.goal_state}</h4>
+                      <div class="work-card-footer">
+                        <div class="work-card-author">
+                          <div class="work-card-avatar">${userInitial}</div>
+                          <div>
+                            <div class="work-card-author-name">${item.user?.full_name || item.profiles?.full_name || 'Unknown'}</div>
+                            <div class="work-card-author-role">Member</div>
+                          </div>
+                        </div>
+                      </div>
+                      <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--gray-100);">
+                        <details>
+                          <summary style="cursor: pointer; font-size: 13px; font-weight: 600; color: var(--gray-700);">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            詳細を見る
+                          </summary>
+                          <div style="margin-top: 12px; padding: 12px; background: var(--gray-50); border-radius: 8px; font-size: 13px;">
+                            <div style="margin-bottom: 8px;">
+                              <strong style="color: var(--gray-700);">判定理由:</strong>
+                              <ul style="margin-top: 4px; margin-left: 20px; list-style: disc;">
+                                ${item.intervention.reasons.map(r => `<li style="color: var(--gray-600);">${r}</li>`).join('')}
+                              </ul>
+                            </div>
+                            <div>
+                              <strong style="color: var(--gray-700);">
+                                <i class="fas fa-lightbulb mr-1"></i>
+                                推奨アクション:
+                              </strong>
+                              <ul style="margin-top: 4px; margin-left: 20px; list-style: disc;">
+                                ${item.intervention.actions.map(a => `<li style="color: var(--gray-600);">${a}</li>`).join('')}
+                              </ul>
+                            </div>
+                            <div style="margin-top: 8px; font-size: 12px; color: var(--gray-600);">
+                              <strong>最終チェックイン:</strong> ${
+                                item.intervention.lastCheckin 
+                                  ? new Date(item.intervention.lastCheckin).toLocaleDateString('ja-JP') + ' (' + item.intervention.daysSinceLastCheckin + '日前)'
+                                  : 'なし'
+                              }
+                            </div>
+                          </div>
+                        </details>
+                      </div>
+                    </div>
+                  </div>
+                `
+              }).join('')}
+            </div>
+          `}
+        </div>
+
+        <!-- Right Sidebar -->
+        <div>
+          <!-- Statistic Card -->
+          <div class="statistic-card" style="margin-bottom: 24px;">
+            <div class="statistic-avatar">
+              ${userInitial}
+              <span class="statistic-badge">50%</span>
+            </div>
+            <div class="statistic-greeting">Good Morning ${userName} 🔥</div>
+            <div class="statistic-subtitle">Continue your learning to achieve your target!</div>
+            
+            <!-- Chart -->
+            <div class="statistic-chart">
+              <div class="statistic-bar" style="height: 40%;"></div>
+              <div class="statistic-bar active" style="height: 70%;"></div>
+              <div class="statistic-bar" style="height: 50%;"></div>
+              <div class="statistic-bar active" style="height: 90%;"></div>
+              <div class="statistic-bar" style="height: 60%;"></div>
+            </div>
+            <div class="statistic-labels">
+              <span>1-10 Aug</span>
+              <span>11-20 Aug</span>
+              <span>21-30 Aug</span>
+            </div>
+          </div>
+
+          <!-- Your Mentors -->
+          <div class="statistic-card">
+            <div class="section-header">
+              <h3 class="section-title">Your Mentor</h3>
+              <a class="section-action">
+                <i class="fas fa-plus"></i>
+              </a>
+            </div>
+            
+            <div class="mentor-list">
+              ${state.dashboard.slice(0, 3).map(item => {
+                const memberName = item.user?.full_name || item.profiles?.full_name || 'Member'
+                const memberInitial = memberName.charAt(0).toUpperCase()
+                return `
+                  <div class="mentor-item">
+                    <div class="mentor-avatar">
+                      ${memberInitial}
+                      <div class="mentor-status"></div>
+                    </div>
+                    <div class="mentor-info">
+                      <div class="mentor-name">${memberName}</div>
+                      <div class="mentor-role">Member</div>
+                    </div>
+                    <button class="mentor-follow-btn">
+                      <i class="fas fa-user-plus"></i>
+                      Follow
+                    </button>
+                  </div>
+                `
+              }).join('')}
+            </div>
+            
+            <button class="btn-primary" style="width: 100%; margin-top: 16px; justify-content: center;">
+              See All
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `
+}
+
+// ============= Member Dashboard =============>
   `
 }
 
@@ -921,51 +1062,22 @@ async function showCreateWorkForm() {
     await loadOffices()
   }
   
-  // Update form with assignment options
+  // Update form visibility
   const form = document.getElementById('createWorkForm')
-  form.classList.remove('hidden')
+  form.style.display = 'block'
   
   // Inject member selection if role allows
   if (state.profile.role === 'regional_manager' || state.profile.role === 'base_manager') {
-    const assignmentSection = document.getElementById('assignmentSection')
-    if (!assignmentSection) {
-      const formElement = form.querySelector('form')
-      const buttonDiv = formElement.querySelector('.flex.gap-2')
-      
-      const html = `
-        <div id="assignmentSection">
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-              <i class="fas fa-user mr-1"></i>担当者を選択（オプション）
-            </label>
-            <select name="userId" 
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              onchange="handleUserSelection(this.value)">
-              <option value="">自分</option>
-              ${(state.users || []).filter(u => u.role === 'member').map(user => `
-                <option value="${user.id}">
-                  ${user.full_name}（${user.offices?.name || ''}）
-                </option>
-              `).join('')}
-            </select>
-          </div>
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-              <i class="fas fa-building mr-1"></i>所属拠点（オプション）
-            </label>
-            <select name="officeId" 
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-              <option value="">デフォルト（担当者の拠点）</option>
-              ${(state.offices || []).map(office => `
-                <option value="${office.id}">
-                  ${office.name}（${office.region}）
-                </option>
-              `).join('')}
-            </select>
-          </div>
-        </div>
-      `
-      buttonDiv.insertAdjacentHTML('beforebegin', html)
+    const assignSection = document.getElementById('assignMemberSection')
+    if (assignSection) {
+      assignSection.style.display = 'block'
+      const userSelect = document.getElementById('userSelect')
+      userSelect.innerHTML = '<option value="">選択してください</option>' +
+        (state.users || []).filter(u => u.role === 'member').map(user => `
+          <option value="${user.id}">
+            ${user.full_name}（${user.offices?.name || ''}）
+          </option>
+        `).join('')
     }
   }
 }
@@ -985,12 +1097,12 @@ function handleUserSelection(userId) {
 
 function hideCreateWorkForm() {
   const form = document.getElementById('createWorkForm')
-  form.classList.add('hidden')
+  form.style.display = 'none'
   
-  // Remove assignment section to refresh it next time
-  const assignmentSection = document.getElementById('assignmentSection')
-  if (assignmentSection) {
-    assignmentSection.remove()
+  // Hide assignment section
+  const assignSection = document.getElementById('assignMemberSection')
+  if (assignSection) {
+    assignSection.style.display = 'none'
   }
 }
 
