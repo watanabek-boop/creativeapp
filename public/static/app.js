@@ -1020,8 +1020,9 @@ async function viewWork(workId) {
   await loadWorkDetail(workId)
 }
 
-function backToWorks() {
+async function backToWorks() {
   state.currentWork = null
+  await loadWorks() // Work一覧を再読み込み
   render()
 }
 
